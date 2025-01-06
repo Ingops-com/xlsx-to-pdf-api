@@ -30,7 +30,7 @@ pipeline {
         stage('Deploy') {
            steps {
                 script {
-                        sh 'docker run -d -p ${PORT}:${PORT} -v "$(pwd)/app/static:/app/static" --name ${CONTAINER_NAME} ${CONTAINER_NAME} --restart=always'
+                        sh 'docker run -d -p ${PORT}:${PORT} -v "$(pwd)/app/static:/app/static" --name ${CONTAINER_NAME} --restart=always'
                 }
             }
         }
