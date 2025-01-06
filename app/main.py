@@ -13,7 +13,7 @@ swagger_config = {
         "description": "API to convert Excel files to PDF",
         "version": "1.0.0"
     },
-    "host": "localhost:5000",
+    "host": "localhost:5050",
     "basePath": "/",
     "specs": [
         {
