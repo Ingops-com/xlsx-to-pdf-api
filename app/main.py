@@ -1,7 +1,10 @@
+# -*- coding: utf-8 -*-
+
 from flask import Flask, request, send_file, jsonify
 from flasgger import Swagger
 import os
 import subprocess
+import io
 
 app = Flask(__name__)
 
@@ -10,10 +13,10 @@ swagger_config = {
     "swagger": "2.0",
     "info": {
         "title": "Excel to PDF API",
-        "description": "API to convert Excel files to PDF",
+        "description": "API para convertir archivos de Excel a PDF",
         "version": "1.0.0"
     },
-    "host": "178.16.141.125:5050",
+    "host": "localhost:5050",
     "basePath": "/",
     "specs": [
         {
@@ -32,6 +35,7 @@ swagger_config = {
         ('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     ]
 }
+
 swagger = Swagger(app, config=swagger_config)
 
 UPLOAD_FOLDER = './static'
@@ -40,7 +44,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 @app.route('/convert', methods=['POST'])
 def convert_file():
     """
-    Convert an Excel file to PDF.
+    Convierte un archivo de Excel a PDF.
     ---
     consumes:
       - multipart/form-data
@@ -49,26 +53,26 @@ def convert_file():
         in: formData
         type: file
         required: true
-        description: The Excel file to convert
+        description: El archivo de Excel a convertir
     responses:
       200:
-        description: The converted PDF file
+        description: El archivo PDF convertido
         content:
           application/pdf:
             schema:
               type: string
               format: binary
       400:
-        description: Bad Request
+        description: Solicitud incorrecta
       500:
-        description: Internal Server Error
+        description: Error interno del servidor
     """
     if 'file' not in request.files:
-        return jsonify({"error": "No file provided"}), 400
+        return jsonify({"error": "No se proporcionó ningún archivo"}), 400
 
     file = request.files['file']
     if file.filename == '':
-        return jsonify({"error": "No file selected"}), 400
+        return jsonify({"error": "No se seleccionó ningún archivo"}), 400
 
     # Guardar el archivo Excel en el directorio de subida
     input_path = os.path.abspath(os.path.join(UPLOAD_FOLDER, file.filename))
@@ -85,14 +89,35 @@ def convert_file():
     # Verificar si la conversión falló
     if proceso.returncode != 0:
         error_message = proceso.stderr.decode()
-        return jsonify({"error": "Failed to convert file", "details": error_message}), 500
+        # Borrar archivos en caso de error
+        if os.path.exists(input_path):
+            os.remove(input_path)
+        return jsonify({"error": "Error al convertir el archivo", "details": error_message}), 500
 
     # Verificar si el archivo PDF fue generado
     if not os.path.exists(output_path):
-        return jsonify({"error": "Output file not found"}), 500
+        # Borrar archivo Excel si el PDF no se generó
+        if os.path.exists(input_path):
+            os.remove(input_path)
+        return jsonify({"error": "El archivo PDF no fue encontrado"}), 500
 
-    # Retornar el archivo PDF
-    return send_file(output_path, as_attachment=True, mimetype='application/pdf')
+    # Abrir el archivo PDF en binario
+    with open(output_path, 'rb') as f:
+        pdf_data = f.read()
+
+    # Borrar los archivos después de leer su contenido
+    if os.path.exists(input_path):
+        os.remove(input_path)
+    if os.path.exists(output_path):
+        os.remove(output_path)
+
+    # Retornar el archivo PDF desde la memoria
+    return send_file(
+        io.BytesIO(pdf_data),
+        as_attachment=True,
+        mimetype='application/pdf',
+        download_name=pdf_name
+    )
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5050)
