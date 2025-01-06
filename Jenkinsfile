@@ -28,9 +28,10 @@ pipeline {
         }
 
         stage('Deploy') {
-           steps {
+            steps {
                 script {
-                        sh 'docker run -d -p ${PORT}:${PORT} -v "$(pwd)/app/static:/app/static" --name ${CONTAINER_NAME} --restart=always'
+                    // Correr el contenedor con la imagen construida
+                    sh 'docker run -d -p ${PORT}:5000 -v "$(pwd)/app/static:/app/static" --name ${CONTAINER_NAME} --restart=always ${DOCKER_IMAGE}:${BUILD_NUMBER}'
                 }
             }
         }
