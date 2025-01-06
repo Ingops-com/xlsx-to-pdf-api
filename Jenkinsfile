@@ -12,7 +12,7 @@ pipeline {
             steps {
                 script {
                     // Construir la imagen Docker con un tag
-                    sh 'docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} .'
+                    sh 'docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ./app'
                 }
             }
         }
