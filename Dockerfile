@@ -19,7 +19,7 @@ COPY . /app
 RUN pip3 install -r requirements.txt
 
 # Exponer el puerto de Flask
-EXPOSE 5000
+EXPOSE 5050
 
 # Comando para iniciar la aplicación
 CMD ["python3", "main.py"]
